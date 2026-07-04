@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(js|assets|style.css)(.*)",
+      "destination": "/client/$1$2"
+    },
+    {
+      "source": "/client/(js|assets|style.css)(.*)",
+      "destination": "/client/$1$2"
+    },
+    {
+      "source": "/client",
+      "destination": "/client/index.html"
+    },
+    {
+      "source": "/client/",
+      "destination": "/client/index.html"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/client/index.html"
+    }
+  ]
+}

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>sticky-fight — Stickman jangovar o'yini</title>
+  <meta name="description" content="Stickman fight - 2D HTML5 Canvas fighting o'yini. Single Player va real-time Multiplayer rejimlar.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- Socket.io client library -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+  <!-- Ambient background particles / grid grid overlay -->
+  <div class="bg-vignette"></div>
+  <div class="bg-grid"></div>
+
+  <!-- Audio settings floating trigger (Global) -->
+  <button id="btn-audio-toggle" class="audio-toggle-btn" title="Ovoz yoqish/o'chirish">
+    <span class="icon">🔊</span>
+  </button>
+
+  <main class="app-container">
+
+    <!-- 1. BOSH MENYU SCREEN -->
+    <section id="screen-menu" class="screen active">
+      <div class="menu-box glass-panel">
+        <h1 class="game-logo glow-text">sticky<span>-</span>fight</h1>
+        <p class="tagline">Ro'yxatdan o'tishsiz real-time stickman jangi!</p>
+        
+        <div class="input-group">
+          <label for="input-nickname">Taqallumingiz (Nickname):</label>
+          <input type="text" id="input-nickname" placeholder="Player_1234" maxlength="15">
+        </div>
+
+        <div class="menu-buttons">
+          <button id="btn-menu-play" class="btn btn-primary btn-glow">O'ynash</button>
+          <button id="btn-menu-rules" class="btn btn-secondary">Qoidalar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. HERO SELECT SCREEN -->
+    <section id="screen-hero" class="screen">
+      <div class="hero-select-box glass-panel">
+        <h2 class="section-title">Qahramoningizni tanlang</h2>
+        <p class="section-desc">Har bir qahramonning o'ziga xos bonusi bor</p>
+
+        <div class="hero-selector-layout">
+          <!-- Cards -->
+          <div class="hero-cards">
+            <div class="hero-card green active" data-color="green">
+              <div class="hero-card-glow"></div>
+              <div class="hero-avatar green"></div>
+              <h3>Green</h3>
+              <p class="bonus-stat">+15% Jon (HP)</p>
+              <div class="stat-badge">115 HP</div>
+            </div>
+
+            <div class="hero-card yellow" data-color="yellow">
+              <div class="hero-card-glow"></div>
+              <div class="hero-avatar yellow"></div>
+              <h3>Yellow</h3>
+              <p class="bonus-stat">+20% Tezlik</p>
+              <div class="stat-badge">Tezkor</div>
+            </div>
+
+            <div class="hero-card blue" data-color="blue">
+              <div class="hero-card-glow"></div>
+              <div class="hero-avatar blue"></div>
+              <h3>Blue</h3>
+              <p class="bonus-stat">90% Himoya</p>
+              <div class="stat-badge">Tank</div>
+            </div>
+
+            <div class="hero-card red" data-color="red">
+              <div class="hero-card-glow"></div>
+              <div class="hero-avatar red"></div>
+              <h3>Red</h3>
+              <p class="bonus-stat">+15% Tezkor Zarba</p>
+              <div class="stat-badge">Agressor</div>
+            </div>
+          </div>
+
+          <!-- Live Preview Canvas -->
+          <div class="hero-preview-panel glass-panel">
+            <canvas id="hero-preview-canvas" width="200" height="250"></canvas>
+            <div class="preview-shadow"></div>
+            <div id="hero-bonus-desc" class="bonus-desc-text">
+              Yashil qahramon ko'proq chidamlilikka ega bo'lib, jangi 115 HP bilan boshlaydi.
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-select-actions">
+          <button id="btn-hero-back" class="btn btn-secondary">Orqaga</button>
+          <button id="btn-hero-next" class="btn btn-primary btn-glow">Davom etish</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. GAME MODE SELECT SCREEN -->
+    <section id="screen-mode" class="screen">
+      <div class="mode-select-box glass-panel">
+        <h2 class="section-title">O'yin rejimini tanlang</h2>
+        
+        <div class="mode-cards-container">
+          <!-- Single Player -->
+          <div class="mode-card" id="card-mode-single">
+            <div class="mode-icon">🤖</div>
+            <h3>Kompyuterga qarshi</h3>
+            <p>Bot bilan o'ynang va mahoratingizni oshiring</p>
+            
+            <div class="difficulty-picker">
+              <label>Qiyinlik darajasi:</label>
+              <div class="diff-options">
+                <button class="diff-btn active" data-diff="easy">Oson</button>
+                <button class="diff-btn" data-diff="normal">Normal</button>
+                <button class="diff-btn" data-diff="hard">Qiyin</button>
+              </div>
+            </div>
+            
+            <button id="btn-start-single" class="btn btn-primary">Single Player boshlash</button>
+          </div>
+
+          <!-- Multiplayer -->
+          <div class="mode-card" id="card-mode-multi">
+            <div class="mode-icon">⚔️</div>
+            <h3>Real o'yinchiga qarshi</h3>
+            <p>Do'stingiz yoki tasodifiy raqib bilan real vaqtda jang qiling</p>
+            <button id="btn-start-multi-menu" class="btn btn-primary btn-glow">Multiplayer menyusi</button>
+          </div>
+        </div>
+
+        <button id="btn-mode-back" class="btn btn-secondary">Orqaga</button>
+      </div>
+    </section>
+
+    <!-- 4. MULTIPLAYER MENU / LOBBY SCREEN -->
+    <section id="screen-multiplayer" class="screen">
+      <div class="lobby-box glass-panel">
+        <h2 class="section-title">Multiplayer</h2>
+
+        <!-- Action choosing (Subscreen A) -->
+        <div id="multi-sub-choice" class="multi-sub-flow active">
+          <p class="lobby-desc">Xona yaratib kodni do'stingizga yuboring yoki mavjud xonaga ulaning.</p>
+          <div class="multi-choice-buttons">
+            <button id="btn-multi-create" class="btn btn-primary btn-glow">Xona yaratish</button>
+            <button id="btn-multi-join-flow" class="btn btn-secondary">Xonaga ulanish</button>
+            <button id="btn-multi-matchmake" class="btn btn-accent">Tezkor O'yin (Matchmaking)</button>
+          </div>
+        </div>
+
+        <!-- Join Room Form (Subscreen B) -->
+        <div id="multi-sub-join" class="multi-sub-flow">
+          <p class="lobby-desc">Ulanmoqchi bo'lgan 5 xonali kodni kiriting:</p>
+          <div class="join-input-group">
+            <input type="text" id="input-room-code" placeholder="A3F9K" maxlength="5" autocomplete="off">
+            <button id="btn-multi-join-submit" class="btn btn-primary">Kirish</button>
+          </div>
+          <p id="join-error-msg" class="error-text hidden"></p>
+          <button id="btn-join-back" class="btn btn-secondary">Orqaga</button>
+        </div>
+
+        <!-- Room Lobby Waiting Room (Subscreen C) -->
+        <div id="multi-sub-lobby" class="multi-sub-flow">
+          <div class="room-code-display">
+            <span>Xona kodi:</span>
+            <div class="code-badge-container">
+              <span id="room-code-badge" class="code-badge">-----</span>
+              <button id="btn-copy-code" class="btn btn-small" title="Kodni nusxalash">📋 Nusxa olish</button>
+            </div>
+          </div>
+
+          <div class="lobby-players-grid">
+            <!-- Player 1 -->
+            <div id="lobby-p1-card" class="lobby-player-card empty">
+              <div class="player-avatar"></div>
+              <div class="player-info">
+                <span class="player-name">Kutilmoqda...</span>
+                <span class="player-ready-status">Tayyor emas</span>
+              </div>
+            </div>
+
+            <div class="vs-divider">VS</div>
+
+            <!-- Player 2 -->
+            <div id="lobby-p2-card" class="lobby-player-card empty">
+              <div class="player-avatar"></div>
+              <div class="player-info">
+                <span class="player-name">Kutilmoqda...</span>
+                <span class="player-ready-status">Tayyor emas</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="spectators-info hidden" id="lobby-spectators">
+            Tomoshabinlar soni: <span id="lobby-spectators-count">0</span>
+          </div>
+
+          <div class="lobby-actions">
+            <button id="btn-lobby-exit" class="btn btn-secondary">Lobbydan chiqish</button>
+            <button id="btn-lobby-ready" class="btn btn-primary btn-glow disabled">TAYYORMAN</button>
+          </div>
+        </div>
+
+        <button id="btn-multi-back" class="btn btn-secondary multi-back-btn">Orqaga</button>
+      </div>
+    </section>
+
+    <!-- 5. BATTLE ARENA SCREEN -->
+    <section id="screen-battle" class="screen">
+      <!-- Arena UI Top HUD -->
+      <header class="battle-hud">
+        <!-- Player 1 HUD -->
+        <div class="hud-player p1">
+          <div class="hud-meta">
+            <span id="hud-p1-name" class="hud-name">Siz</span>
+            <div class="round-scores" id="hud-p1-rounds">
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+          <div class="hp-container">
+            <div id="hud-p1-hp" class="hp-bar" style="width: 100%"></div>
+            <div id="hud-p1-hp-text" class="hp-text">100%</div>
+          </div>
+        </div>
+
+        <!-- Center VS / Timer -->
+        <div class="hud-center">
+          <div class="vs-text glow-text">VS</div>
+          <div id="battle-timer" class="battle-timer">02:00</div>
+          <div id="ping-indicator" class="ping-indicator hidden">Ping: 0ms</div>
+        </div>
+
+        <!-- Player 2 HUD -->
+        <div class="hud-player p2">
+          <div class="hud-meta">
+            <div class="round-scores" id="hud-p2-rounds">
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+            <span id="hud-p2-name" class="hud-name">Raqib</span>
+          </div>
+          <div class="hp-container">
+            <div id="hud-p2-hp" class="hp-bar" style="width: 100%"></div>
+            <div id="hud-p2-hp-text" class="hp-text">100%</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Combat Overlay Events -->
+      <div id="battle-announcement" class="battle-announcement hidden">3</div>
+      
+      <!-- Combos text indicators -->
+      <div id="combo-meter-p1" class="combo-meter p1 hidden">Combo x0</div>
+      <div id="combo-meter-p2" class="combo-meter p2 hidden">Combo x0</div>
+
+      <!-- Main Game Canvas -->
+      <div class="canvas-wrapper">
+        <canvas id="battle-canvas" width="800" height="500"></canvas>
+      </div>
+
+      <!-- Mobile Touch Controls Layout -->
+      <div id="mobile-controls" class="mobile-controls-overlay">
+        <div class="control-left-pad">
+          <button id="mbtn-left" class="mcontrol-btn">⬅️</button>
+          <button id="mbtn-right" class="mcontrol-btn">➡️</button>
+        </div>
+        <div class="control-right-pad">
+          <button id="mbtn-block" class="mcontrol-btn block-btn">🛡️</button>
+          <button id="mbtn-jump" class="mcontrol-btn jump-btn" style="background: rgba(16, 185, 129, 0.6); border-color: rgba(52, 211, 153, 0.5);">🦘</button>
+          <button id="mbtn-attack" class="mcontrol-btn attack-btn">⚔️</button>
+        </div>
+      </div>
+
+      <!-- Exit Battle mid-game -->
+      <div class="battle-footer">
+        <button id="btn-battle-exit" class="btn btn-small btn-secondary">Taslim bo'lish</button>
+      </div>
+    </section>
+
+    <!-- 6. RESULT SCREEN -->
+    <section id="screen-result" class="screen">
+      <div class="result-box glass-panel">
+        <h2 id="result-title" class="result-title-text glow-text">Siz G'alaba Qozondingiz!</h2>
+        <p id="result-desc" class="result-desc-text">Ajoyib jang bo'ldi!</p>
+
+        <div class="score-summary glass-panel">
+          <div class="score-row">
+            <span id="res-p1-name" class="res-name">Player 1</span>
+            <span id="res-score-vals" class="res-score">2 - 1</span>
+            <span id="res-p2-name" class="res-name">Player 2</span>
+          </div>
+        </div>
+
+        <div class="result-buttons">
+          <button id="btn-result-replay" class="btn btn-primary btn-glow">Qayta o'ynash</button>
+          <button id="btn-result-menu" class="btn btn-secondary">Bosh menyuga qaytish</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Rules modal description -->
+  <dialog id="modal-rules" class="glass-panel modal">
+    <div class="modal-content">
+      <h2>O'yin Qoidalari</h2>
+      <div class="rules-body">
+        <p><strong>"sticky-fight"</strong> — bu ikki qahramonning yog'och shamshirlar bilan jangi.</p>
+        
+        <h3>Kompyuter boshqaruvi:</h3>
+        <ul>
+          <li><strong>Harakat:</strong> <code>A</code> / <code>D</code> yoki <code>⬅️</code> / <code>➡️</code> (Yurish), <code>W</code> yoki <code>⬆️</code> (Sakrash)</li>
+          <li><strong>Zarba berish:</strong> <code>Space</code></li>
+          <li><strong>Himoya (Blok):</strong> <code>S</code> yoki <code>Shift</code></li>
+        </ul>
+
+        <h3>Qahramon Xususiyatlari:</h3>
+        <ul>
+          <li>🟢 <strong style="color:#66CC00">Yashil:</strong> Chidamlilik. Jangni 115 HP bilan boshlaydi.</li>
+          <li>🟡 <strong style="color:#FEC503">Sariq:</strong> Tezkorlik. Harakat tezligi 20% yuqori.</li>
+          <li>🔵 <strong style="color:#33CCFF">Moviy:</strong> Qalqon. Bloklanganda zararni 90% neytrallaydi.</li>
+          <li>🔴 <strong style="color:#D81000">Qizil:</strong> Shiddat. Hujum animatsiyasi va qayta yuklanishi 15% tezroq.</li>
+        </ul>
+
+        <h3>Mexanikalar:</h3>
+        <ul>
+          <li>Zarba raqibga yetsa tasodifiy 5-12% HP olib tashlaydi.</li>
+          <li>Agar raqib himoyalansa (Blok), zarar 75% ga kamayadi (Moviyda 90%).</li>
+          <li>Ketma-ket 3 ta tezkor zarba bersangiz, "Combo x3" qo'shimcha +5% zarar yetkazadi!</li>
+          <li>Jang 3 ta raunddan iborat bo'ladi (2 ta g'alabagacha).</li>
+        </ul>
+      </div>
+      <button id="btn-close-rules" class="btn btn-primary">Tushunarli</button>
+    </div>
+  </dialog>
+
+  <!-- Notification Toast -->
+  <div id="toast-notification" class="toast hidden">Xabar matni</div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <p id="loading-text">Yuklanmoqda...</p>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/stickman.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/botAI.js"></script>
+  <script src="js/network.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

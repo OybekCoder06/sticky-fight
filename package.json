@@ -1,0 +1,23 @@
+{
+  "name": "sticky-fight",
+  "version": "1.0.0",
+  "description": "2D Stickman Fighting Game with Single Player AI and Socket.io Multiplayer",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "keywords": [
+    "stickman",
+    "fighting",
+    "socket.io",
+    "canvas",
+    "web-audio"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}
