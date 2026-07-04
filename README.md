@@ -91,6 +91,45 @@ Ushbu o'yin an'anaviy Express serveri va Socket.io (WebSocket) texnologiyasiga a
 3. **Avtomatik sozlash**: Railway `package.json` ichidagi buyruqlarni ko'rib, loyihani avtomatik ishga tushiradi.
 4. **Domain qo'shish**: Project sozlamalariga kirib (Settings), **Generate Domain** tugmasini bossangiz, o'yin havolasi taqdim etiladi.
 
+### Option C. O'zingizning VPS serveringizga joylash (Tavsiya etiladi - To'liq boshqaruv)
+
+VPS serverda domen ulamasdan ham, to'g'ridan-to'g'ri ommaviy IP manzil (Public IP) orqali o'yinni ishga tushirish mumkin:
+
+1. **Node.js o'rnatish** (agar hali o'rnatilmagan bo'lsa):
+   Ubuntu/Debian uchun:
+   ```bash
+   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   ```
+
+2. **Loyihani yuklash**:
+   Loyihani VPS'ga git orqali clone qiling yoki fayllarni nusxalang, so'ng loyiha papkasiga kiring:
+   ```bash
+   git clone <sizning-repo-linki>
+   cd sticky-fight
+   npm install
+   ```
+
+3. **PM2 o'rnatish** (Serverni orqa fonda doimiy ishlatish uchun):
+   ```bash
+   sudo npm install -g pm2
+   pm2 start server/server.js --name "sticky-fight"
+   ```
+   *Eslatma: PM2 o'yinni SSH oyna yopilganidan keyin ham fonda saqlab turadi.*
+
+4. **Firewallni ochish** (3000-portni ruxsat berish):
+   ```bash
+   sudo ufw allow 3000
+   ```
+
+5. **O'yinga kirish**:
+   Brauzer orqali `http://VPS_IP_MANZILI:3000` havolasiga kiring. O'yin to'liq ishlaydi!
+
+6. **Domen ulash** (Ixtiyoriy):
+   Agar chiroyli domen ulashni xohlasangiz:
+   - Istalgan domen provayderidan domen olib, uning DNS sozlamalarida **A record** yaratib, qiymatiga VPS IP manzilini yozasiz.
+   - VPS'da Nginx o'rnatib, 80-portdan kelgan so'rovlarni 3000-portga yo'naltiruvchi reverse proxy sozlaysiz.
+
 ---
 
 ## 🎮 O'yin Boshqaruvi
